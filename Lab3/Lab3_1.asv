@@ -1,0 +1,50 @@
+%%
+w1 = out.w;
+t1 = out.tout;
+
+figure(1)
+plot(t1,w1)
+xlabel('time (s)'); ylabel('omega (rad/sec)')
+
+%%
+td = t1(415);
+figure(1)
+plot(w1)
+% plot(t1(415:end)-t1(415),w1(415:end));
+
+%%
+stepres = 'a*(1-exp(-x/b))'; %K(1-e^(-t/tau))
+f_load = fit(t1(415:end)-t1(415),w1(415:end),stepres,'Start',[209 6.3*1e-3]);
+
+K = f_load.a/220;
+tau = f_load.b;
+
+G = tf([K],[tau 1], 'InputDelay', td);
+
+%%
+figure(2)
+plot(t1,w1); hold on;
+yhat = step(G,t1)*220; %Estimated Data
+plot(t1,yhat); hold off
+
+%%
+y = w1;
+ym = mean(y);
+perfit = 100*(1-(norm(y-yhat)/norm(y-ym)));
+
+%%
+w2 = out.w;
+t2 = out.tout;
+u2 = out.u;
+plot(t2,w2)
+
+%% 
+y = w2; ym = mean(y);
+G = tf([1.001],[0.00653 1], 'InputDelay',0.004);
+yhat_sine =lsim(G,u2,t2);
+
+figure(3)
+plot(t2,w2); hold on;
+plot(t2, yhat_sine); hold off;
+
+perfit = 100*(1-(norm(y-yhat_sine)/norm(y-ym)))
